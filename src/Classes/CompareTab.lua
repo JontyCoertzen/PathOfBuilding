@@ -1289,6 +1289,29 @@ function CompareTabClass:RemoveBuild(index)
 	end
 end
 
+-- Replace the live character entry in place, add it if missing, or remove it when entry is nil
+function CompareTabClass:SetLiveEntry(entry)
+	for index, existing in ipairs(self.compareEntries) do
+		if existing.isLive then
+			if entry then
+				self.compareEntries[index] = entry
+				self.treeSearchNeedsSync = true
+				self:UpdateBuildSelector()
+			else
+				self:RemoveBuild(index)
+			end
+			return
+		end
+	end
+	if entry then
+		t_insert(self.compareEntries, entry)
+		if self.activeCompareIndex == 0 then
+			self.activeCompareIndex = #self.compareEntries
+		end
+		self:UpdateBuildSelector()
+	end
+end
+
 -- Re-import primary build using character import (same as Import/Export tab)
 function CompareTabClass:ReimportPrimary()
 	local importTab = self.primaryBuild.importTab

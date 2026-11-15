@@ -121,6 +121,8 @@ function TreeTabClass:TreeTab(build)
 	self.controls.compareSelect = new("DropDownControl"):DropDownControl({ "LEFT", self.controls.compareCheck, "RIGHT" }, { 8, 0, 190, 20 }, nil, function(index, value)
 		if self.specList[index] then
 			self:SetCompareSpec(index)
+		elseif index == #self.specList + 1 and self.build.liveCharacter.entry then
+			self.compareLive = true
 		else
 			self:OpenSpecManagePopup()
 		end
@@ -447,11 +449,26 @@ function TreeTabClass:Draw(viewPort, inputEvents)
 		self.viewer:Focus(self.jumpToX, self.jumpToY, treeViewPort, self.build)
 		self.jumpToNode = false
 	end
-	self.viewer.compareSpec = self.isComparing and self.specList[self.activeCompareSpec] or nil
+	local liveCharacter = self.build.liveCharacter
+	local liveEntry = liveCharacter.entry
+	if not liveEntry then
+		self.compareLive = false
+	end
+	local liveSpec = self.compareLive and liveEntry.spec
+	self.viewer.compareSpec = self.isComparing and (liveSpec or self.specList[self.activeCompareSpec]) or nil
 	self.viewer:Draw(self.build, treeViewPort, inputEvents)
 
+	if self.isComparing and liveSpec then
+		local status = liveCharacter:GetStatus(self.build.spec)
+		SetDrawColor(1, 1, 1)
+		DrawString(treeViewPort.x + 8, treeViewPort.y + 8, "LEFT", 16, "VAR", status)
+	end
+
 	local newSpecList = self:GetSpecList()
-	self.controls.compareSelect.selIndex = self.activeCompareSpec
+	if liveEntry then
+		t_insert(newSpecList, liveEntry.label)
+	end
+	self.controls.compareSelect.selIndex = self.compareLive and #self.specList + 1 or self.activeCompareSpec
 	self.controls.compareSelect:SetList(newSpecList)
 	t_insert(newSpecList, "Manage trees... (ctrl-m)")
 	self.controls.specSelect.selIndex = self.activeSpec
@@ -584,6 +601,7 @@ function TreeTabClass:SetActiveSpec(specId)
 end
 
 function TreeTabClass:SetCompareSpec(specId)
+	self.compareLive = false
 	self.activeCompareSpec = m_min(specId, #self.specList)
 	local curSpec = self.specList[self.activeCompareSpec]
 

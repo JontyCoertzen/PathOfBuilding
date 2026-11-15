@@ -91,7 +91,7 @@ local function addOAuthControls(self)
 	self.controls.characterImportAnchor = new("Control"):Control({ "TOPLEFT", self.controls.sectionOauthCharImport, "TOPLEFT" },
 		{ labelSpacing, 40, 200, 16 })
 	self.controls.sectionOauthCharImport.height = function()
-		return self.isAuthorized() and 200 or 60
+		return self.isAuthorized() and 232 or 60
 	end
 
 	-- realm select
@@ -318,6 +318,27 @@ local function addOAuthControls(self)
 		{ 220, 0, 18 }, "Delete equipment:", nil, "Delete all equipped items when importing.", true)
 	self.controls.charImportItemsIgnoreWeaponSwap = new("CheckBoxControl"):CheckBoxControl({ "LEFT", self.controls.charImportItems,
 		"RIGHT" }, { 380, 0, 18 }, "Ignore weapon swap:", nil, "Ignore items and skills in weapon swap.", false)
+	self.controls.charTrackLive = new("ButtonControl"):ButtonControl({ "TOPLEFT", self.controls.charImportItems, "BOTTOMLEFT" },
+		{ 0, rowSpacing, 110, 20 }, function()
+			return self.build.liveCharacter:IsLinked() and "Stop Tracking" or "Track Live"
+		end, function()
+			local liveCharacter = self.build.liveCharacter
+			if liveCharacter:IsLinked() then
+				liveCharacter:Unlink()
+			else
+				local realm = self.controls.accountRealm:GetSelValue()
+				local selectedName = self.controls.charSelect:GetSelValue().label
+				liveCharacter:Link(realm.realmCode, selectedName)
+			end
+			self.build.modFlag = true
+		end)
+	self.controls.charTrackLive.enabled = function()
+		return self.build.liveCharacter:IsLinked() or (self.usingOauth and self.isAuthorized() and self.controls.charSelect:GetSelValue())
+	end
+	self.controls.charTrackLiveStatus = new("LabelControl"):LabelControl({ "TOPLEFT", self.controls.charTrackLive, "BOTTOMLEFT" },
+		{ 0, 6, 0, 16 }, function()
+			return self.build.liveCharacter:GetStatus(self.build.spec) or ""
+		end)
 end
 local function addAccountNameControls(self)
 	self.charImportMode = "GETACCOUNTNAME"
@@ -1210,10 +1231,8 @@ function ImportTabClass:ImportPassiveTreeAndJewels(charData, deleteJewels)
 	self.build.treeTab:SetActiveSpec(self.build.treeTab.activeSpec)
 	self.build.spec:BuildClusterJewelGraphs()
 	self.build.spec:AddUndoState()
-	self.build.characterLevel = charData.level or 100
 	self.build.characterLevelAutoMode = false
-	self.build.configTab:UpdateLevel()
-	self.build.controls.characterLevel:SetText(charData.level)
+	self.build:SetCharacterLevel(charData.level or 100)
 	self.build:EstimatePlayerProgress()
 	local resistancePenaltyIndex = 3
 	if self.build.Act then -- Estimate resistance penalty setting based on act progression estimate
@@ -1482,9 +1501,7 @@ function ImportTabClass:ImportItemsAndSkills(charData, clearItems, clearSkills, 
 	self.build.itemsTab:AddUndoState()
 	self.build.skillsTab:UpdateSocketGroups()
 	self.build.skillsTab:AddUndoState()
-	self.build.characterLevel = charData.level
-	self.build.configTab:UpdateLevel()
-	self.build.controls.characterLevel:SetText(tostring(charData.level))
+	self.build:SetCharacterLevel(charData.level)
 	self.build.buildFlag = true
 	-- charData for the wrapper
 	return charData, colorCodes.POSITIVE .. "Items and skills successfully imported."

@@ -424,6 +424,15 @@ function CompareEntryClass:OpenSpectreLibrary()
 	-- No spectre library in comparison entry
 end
 
+function CompareEntryClass:SetCharacterLevel(level)
+	self.characterLevel = level
+	self.configTab:UpdateLevel()
+end
+
+function CompareEntryClass:EstimatePlayerProgress()
+	-- No point-based progress estimate in comparison entry
+end
+
 function CompareEntryClass:AddStatComparesToTooltip(tooltip, baseOutput, compareOutput, header, nodeCount)
 	-- Reuse the stat comparison logic
 	local count = 0

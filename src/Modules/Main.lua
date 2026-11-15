@@ -582,6 +582,7 @@ function main:LoadSettings(ignoreBuild)
 				if node.attrib.buildPath then
 					self.buildPath = node.attrib.buildPath
 				end
+				self.clientLogPath = node.attrib.clientLogPath
 				if node.attrib.nodePowerTheme then
 					self.nodePowerTheme = node.attrib.nodePowerTheme
 				end
@@ -781,6 +782,7 @@ function main:SaveSettings()
 		connectionProtocol = tostring(launch.connectionProtocol),
 		proxyURL = launch.proxyURL,
 		buildPath = (self.buildPath ~= self.defaultBuildPath and self.buildPath or nil),
+		clientLogPath = self.clientLogPath,
 		nodePowerTheme = self.nodePowerTheme,
 		colorPositive = self.colorPositive,
 		colorNegative = self.colorNegative,
@@ -989,6 +991,13 @@ function main:OpenOptionsPopup(savedState)
 		controls.buildPath:SetText(self.buildPath)
 	end
 	controls.buildPath.tooltipText = "Overrides the default save location for builds.\nThe default location is: '"..self.defaultBuildPath.."'"
+
+	nextRow()
+	controls.clientLogPath = new("EditControl"):EditControl({ "TOPLEFT", controls.sectionAnchor, "TOPLEFT" }, { currentX + defaultLabelPlacementX, currentY, 290, 18 })
+	controls.clientLogPathLabel = new("LabelControl"):LabelControl({ "RIGHT", controls.clientLogPath, "LEFT" }, { defaultLabelSpacingPx, 0, 0, 16 }, "^7Game log (Client.txt):")
+	if self.clientLogPath then
+		controls.clientLogPath:SetText(self.clientLogPath)
+	end
 
 	nextRow()
 	controls.nodePowerTheme = new("DropDownControl"):DropDownControl({ "TOPLEFT", controls.sectionAnchor, "TOPLEFT" }, { currentX + defaultLabelPlacementX, currentY, 100, 18 }, {
@@ -1215,6 +1224,7 @@ function main:OpenOptionsPopup(savedState)
 		else
 			self.buildPath = self.defaultBuildPath
 		end
+		self.clientLogPath = controls.clientLogPath.buf:match("%S") and controls.clientLogPath.buf or nil
 		if self.mode == "LIST" then
 			self.modes.LIST:BuildList()
 		end

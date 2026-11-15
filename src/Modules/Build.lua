@@ -622,6 +622,7 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 	-- ensure that we don't refer to outdated calc tab sections
 	self.breakdownIndex = nil
 	self.compareTab = new("CompareTab"):CompareTab(self)
+	self.liveCharacter = new("LiveCharacter"):LiveCharacter(self)
 	-- Used for pined calcs panes
 	self.overlayPanes = { }
 
@@ -636,6 +637,7 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 		["Skills"] = self.skillsTab,
 		["Calcs"] = self.calcsTab,
 		["Import"] = self.importTab,
+		["LiveCharacter"] = self.liveCharacter,
 	}
 	self.legacyLoaders = { -- Special loaders for legacy sections
 		["Spec"] = self.treeTab,
@@ -895,6 +897,12 @@ function buildMode:SyncLoadouts()
 	return treeList, itemList, skillList, configList
 end
 
+function buildMode:SetCharacterLevel(level)
+	self.characterLevel = level
+	self.configTab:UpdateLevel()
+	self.controls.characterLevel:SetText(tostring(level))
+end
+
 function buildMode:EstimatePlayerProgress()
 	if self.spec then
 		local PointsUsed, AscUsed, SecondaryAscUsed = self.spec:CountAllocNodes()
@@ -961,6 +969,7 @@ function buildMode:Shutdown()
 	end
 	self.abortSave = nil
 
+	self.liveCharacter:StopKeepAwake()
 	self.savers = nil
 end
 
@@ -1167,6 +1176,8 @@ function buildMode:OnFrame(inputEvents)
 	if self.abortSave and not launch.devMode then
 		self:CloseBuild()
 	end
+
+	self.liveCharacter:OnFrame()
 
 	for id, event in ipairs(inputEvents) do
 		if event.type == "KeyDown" then
